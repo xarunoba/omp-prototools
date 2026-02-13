@@ -601,20 +601,20 @@ func hexToANSI256(hex string) string {
 func getDefaultConfigContent() string {
 	return `{
 	// Proto config mode: determines which .prototools files to use
-  	// "global" - Only load ~/.proto/.prototools
-   	// "local" - Only load ./.prototools in current directory
-  	// "upwards" - Load .prototools while traversing upwards, but do not load ~/.proto/.prototools (default)
-  	// "upwards-global" or "all" - Load .prototools while traversing upwards, and do load ~/.proto/.prototools
+	// "global" - Only load ~/.proto/.prototools
+	// "local" - Only load ./.prototools in current directory
+	// "upwards" - Load .prototools while traversing upwards, but do not load ~/.proto/.prototools (default)
+	// "upwards-global" or "all" - Load .prototools while traversing upwards, and do load ~/.proto/.prototools
 	"config_mode": ` + fmt.Sprintf("%q", defaultConfigMode) + `,
 
-    // Custom Go template for formatting output
-    // Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsOutdated
-    // Available functions: ne (not equal), fgColor, bgColor, reset
+	// Custom Go template for formatting output
+	// Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsOutdated
+	// Available functions: ne (not equal), fgColor, bgColor, reset
 	"template": ` + fmt.Sprintf("%q", defaultTemplate) + `,
 
 	// Tool-specific icon and color configuration
-  	// Use hex colors (e.g., "#61AFEF") or color names (e.g., "blue", "red", "green")
-   	// Icons use Nerd Font hex codes (e.g., "e76f", "e627")
+	// Use hex colors (e.g., "#61AFEF") or color names (e.g., "blue", "red", "green")
+	// Icons use Nerd Font hex codes (e.g., "e76f", "e627")
 	"tools": {
 		"bun": {
 			"icon": "e76f",
