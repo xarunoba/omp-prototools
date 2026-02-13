@@ -84,8 +84,12 @@ The tool automatically creates a default config file on first run at:
   // "local" - Only load ./.prototools in current directory
   // "upwards" - Load .prototools while traversing upwards, but do not load ~/.proto/.prototools (default)
   // "upwards-global" or "all" - Load .prototools while traversing upwards, and do load ~/.proto/.prototools
-  // This field is optional - if omitted, defaults to "upwards"
   "config_mode": "upwards",
+
+  // Custom Go template for formatting output
+  // Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsOutdated
+  // Available functions: ne (not equal), fgColor, bgColor, reset
+  "template": "{{.ToolIcon}} {{if .IsInstalled}}{{if ne .ResolvedVersion \"\"}}{{if .IsOutdated}}{{fgColor \"#8b6914\"}}{{else}}{{fgColor \"#1c5f2a\"}}{{end}} {{.ResolvedVersion}} {{reset}}{{end}}{{else}}{{fgColor \"red\"}} Missing {{reset}}{{end}}",
 
   // Tool-specific icon and color configuration
   // Use hex colors (e.g., "#61AFEF") or color names (e.g., "blue", "red", "green")
@@ -101,37 +105,12 @@ The tool automatically creates a default config file on first run at:
     }
   },
 
-  // Custom Go template for formatting output
-  // Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsOutdated
-  // Available functions: ne (not equal), fgColor, bgColor, reset
-  "template": "{{.ToolIcon}} {{if .IsInstalled}}{{if ne .ResolvedVersion \"\"}}{{if .IsOutdated}}{{bgColor \"#8b6914\"}}{{else}}{{bgColor \"#1c5f2a\"}}{{end}} {{.ResolvedVersion}} {{reset}}{{end}}{{else}}{{bgColor \"red\"}} Missing {{reset}}{{end}}",
-
   // Cache configuration
   // TTL: Time-to-live for cached data in seconds (default: 300 = 5 minutes)
   // Set to 0 to disable caching, or increase for longer intervals
   "cache": {
     "ttl": 300
   }
-}
-```
-
-### Configuring Proto Config Mode
-
-To show all configured tools instead of just those in your current directory:
-
-To show all configured tools including those in the global proto config:
-
-```json
-{
-  "config_mode": "all"
-}
-```
-
-Or to only show tools from the global proto config:
-
-```json
-{
-  "config_mode": "global"
 }
 ```
 
