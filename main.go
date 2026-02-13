@@ -16,7 +16,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/tidwall/jsonc"
+	"github.com/xarunoba/omp-prototools/jsonc"
 )
 
 const (
