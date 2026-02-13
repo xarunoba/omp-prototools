@@ -166,7 +166,10 @@ The `template` field uses Go's template syntax:
 
 The tool caches Proto command output to improve performance:
 
-- **Location:** `~/.cache/oh-my-posh/integrations/omp-prototools/cache.json`
+- **Location:** Same directory as config file, named `{config_name}.cache.json`
+  - Default: `~/.cache/oh-my-posh/integrations/omp-prototools/config.cache.json`
+  - With custom config: Uses same directory and base name as config file
+- **Format:** JSONC-compatible (indented JSON)
 - **Default TTL:** 300 seconds (5 minutes)
 - **Configurable:** Via `cache.ttl` in config (set to 0 to disable)
 

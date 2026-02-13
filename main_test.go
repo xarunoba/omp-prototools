@@ -5,22 +5,75 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
 
 func TestGetCacheFile(t *testing.T) {
-	cacheFile := getCacheFile()
-	if cacheFile == "" {
-		t.Fatal("getCacheFile returned empty string")
+	tests := []struct {
+		name          string
+		configPath    string
+		wantCacheFile string
+	}{
+		{
+			name:          "default config location",
+			configPath:    "",
+			wantCacheFile: "config.cache.json",
+		},
+		{
+			name:          "custom config with jsonc extension",
+			configPath:    "/custom/path/my-config.jsonc",
+			wantCacheFile: "my-config.cache.json",
+		},
+		{
+			name:          "custom config with json extension",
+			configPath:    "/custom/path/my-config.json",
+			wantCacheFile: "my-config.cache.json",
+		},
+		{
+			name:          "custom config with no extension",
+			configPath:    "/custom/path/config",
+			wantCacheFile: "config.cache.json",
+		},
 	}
 
-	if filepath.Base(cacheFile) != "cache.json" {
-		t.Errorf("Expected cache.json, got %s", filepath.Base(cacheFile))
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			oldConfigPath := configPath
+			oldGetConfigFilePath := getConfigFilePath
+			defer func() {
+				configPath = oldConfigPath
+				getConfigFilePath = oldGetConfigFilePath
+			}()
 
-	if filepath.Base(filepath.Dir(cacheFile)) != "omp-prototools" {
-		t.Errorf("Expected omp-prototools directory, got %s", filepath.Base(filepath.Dir(cacheFile)))
+			configPath = tt.configPath
+			if tt.configPath == "" {
+				tempDir := t.TempDir()
+				configFile := filepath.Join(tempDir, "config.jsonc")
+				os.WriteFile(configFile, []byte("{}"), 0644)
+				getConfigFilePath = func() string { return configFile }
+			} else {
+				getConfigFilePath = func() string { return tt.configPath }
+			}
+
+			cacheFile := getCacheFile()
+			if cacheFile == "" {
+				t.Fatal("getCacheFile returned empty string")
+			}
+
+			if filepath.Base(cacheFile) != tt.wantCacheFile {
+				t.Errorf("Expected %s, got %s", tt.wantCacheFile, filepath.Base(cacheFile))
+			}
+
+			if tt.configPath != "" {
+				expectedDir := filepath.Dir(tt.configPath)
+				actualDir := filepath.Dir(cacheFile)
+				if actualDir != expectedDir {
+					t.Errorf("Expected cache in %s, got %s", expectedDir, actualDir)
+				}
+			}
+		})
 	}
 }
 
@@ -119,6 +172,19 @@ func TestWriteCache(t *testing.T) {
 
 			if err := writeCache(tt.data); (err != nil) != tt.wantErr {
 				t.Errorf("writeCache() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			content, err := os.ReadFile(cacheFile)
+			if err != nil {
+				t.Fatalf("Failed to read cache file: %v", err)
+			}
+
+			if !strings.Contains(string(content), "  ") {
+				t.Error("Cache file should be indented (JSONC-compatible format)")
+			}
+
+			if string(content)[0] != '{' || string(content)[1] != '\n' {
+				t.Error("Cache file should start with formatted JSON object")
 			}
 		})
 	}

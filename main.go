@@ -155,12 +155,31 @@ var getDirectoryContext = func(configMode string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-var getCacheFile = func() string {
+var getConfigFilePath = func() string {
+	if configPath != "" {
+		return configPath
+	}
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(cacheDir, "oh-my-posh", "integrations", "omp-prototools", "cache.json")
+	configDir := filepath.Join(cacheDir, "oh-my-posh", "integrations", "omp-prototools")
+	configFile := filepath.Join(configDir, "config.jsonc")
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		configFile = filepath.Join(configDir, "config.json")
+	}
+	return configFile
+}
+
+var getCacheFile = func() string {
+	configFile := getConfigFilePath()
+	if configFile == "" {
+		return ""
+	}
+	configDir := filepath.Dir(configFile)
+	configBase := filepath.Base(configFile)
+	configName := strings.TrimSuffix(configBase, filepath.Ext(configBase))
+	return filepath.Join(configDir, configName+".cache.json")
 }
 
 func readCache() (CachedData, error) {
@@ -188,7 +207,7 @@ func writeCache(cached CachedData) error {
 		return fmt.Errorf("cannot determine cache directory")
 	}
 
-	data, err := json.Marshal(cached)
+	data, err := json.MarshalIndent(cached, "", "  ")
 	if err != nil {
 		return err
 	}
