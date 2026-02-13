@@ -100,6 +100,11 @@ type CachedData struct {
 	Entries map[string]DirectoryCacheData `json:"entries"` // Keyed by directory hash
 }
 
+type CachedResult struct {
+	StatusData   map[string]ToolStatus
+	OutdatedData map[string]OutdatedStatus
+}
+
 type ProtoConfig struct {
 	ConfigMode string                `json:"config_mode,omitempty"` // global, local, upwards (default), upwards-global
 	Tools      map[string]IconConfig `json:"tools"`
@@ -230,9 +235,9 @@ func isCacheEntryValid(entry DirectoryCacheData, ttlSeconds int) bool {
 	return elapsed.Seconds() < float64(ttlSeconds)
 }
 
-func getCachedData(config ProtoConfig, configMode string) (any, bool) {
+func getCachedData(config ProtoConfig, configMode string) (CachedResult, bool) {
 	if forceRefresh {
-		return nil, false
+		return CachedResult{}, false
 	}
 
 	ttl := config.Cache.TTL
@@ -242,27 +247,23 @@ func getCachedData(config ProtoConfig, configMode string) (any, bool) {
 
 	cached, err := readCache()
 	if err != nil || !isCacheValid(cached) {
-		return nil, false
+		return CachedResult{}, false
 	}
 
 	dirHash, err := getDirectoryContext(configMode)
 	if err != nil {
-		return nil, false
+		return CachedResult{}, false
 	}
 
 	entry, exists := cached.Entries[dirHash]
 	if !exists || !isCacheEntryValid(entry, ttl) {
-		return nil, false
+		return CachedResult{}, false
 	}
 
-	if entry.StatusData != nil {
-		return entry.StatusData, true
-	}
-	if entry.OutdatedData != nil {
-		return entry.OutdatedData, true
-	}
-
-	return nil, false
+	return CachedResult{
+		StatusData:   entry.StatusData,
+		OutdatedData: entry.OutdatedData,
+	}, true
 }
 
 func main() {
@@ -300,12 +301,8 @@ func getProtoStatus() string {
 	cached, ok := getCachedData(config, config.ConfigMode)
 	if ok {
 		close(resultChan)
-		if status, ok := cached.(map[string]ToolStatus); ok {
-			tools = status
-		}
-		if outdated, ok := cached.(map[string]OutdatedStatus); ok {
-			outdatedTools = outdated
-		}
+		tools = cached.StatusData
+		outdatedTools = cached.OutdatedData
 	} else {
 		go func() {
 			var r result
@@ -415,8 +412,8 @@ var loadConfig = func() (ProtoConfig, error) {
 var getToolStatus = func(config ProtoConfig) (map[string]ToolStatus, error) {
 	cached, ok := getCachedData(config, config.ConfigMode)
 	if ok {
-		if status, ok := cached.(map[string]ToolStatus); ok {
-			return status, nil
+		if cached.StatusData != nil {
+			return cached.StatusData, nil
 		}
 	}
 
@@ -441,8 +438,8 @@ var getToolStatus = func(config ProtoConfig) (map[string]ToolStatus, error) {
 var getOutdatedStatus = func(config ProtoConfig) map[string]OutdatedStatus {
 	cached, ok := getCachedData(config, config.ConfigMode)
 	if ok {
-		if outdated, ok := cached.(map[string]OutdatedStatus); ok {
-			return outdated
+		if cached.OutdatedData != nil {
+			return cached.OutdatedData
 		}
 	}
 

@@ -344,8 +344,8 @@ func TestGetCachedData(t *testing.T) {
 				t.Errorf("getCachedData() ok = %v, want %v", ok, tt.wantOk)
 			}
 
-			if tt.wantData && data == nil {
-				t.Error("Expected data to be non-nil")
+			if tt.wantData && (data.StatusData == nil && data.OutdatedData == nil) {
+				t.Error("Expected at least one data field to be populated")
 			}
 		})
 	}
