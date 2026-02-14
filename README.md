@@ -75,60 +75,30 @@ The tool automatically creates a default config file on first run at:
 ~/.cache/oh-my-posh/integrations/omp-prototools/config.jsonc
 ```
 
-### Config Structure
-
-```jsonc
-{
-  // Proto config mode: determines which .prototools files to use
-  // "global" - Only load ~/.proto/.prototools
-  // "local" - Only load ./.prototools in current directory
-  // "upwards" - Load .prototools while traversing upwards, but do not load ~/.proto/.prototools (default)
-  // "upwards-global" or "all" - Load .prototools while traversing upwards, and do load ~/.proto/.prototools
-  "config_mode": "upwards",
-
-  // Custom Go template for formatting output
-  // Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsLatest, .IsOutdated
-  // ConfigVersion, NewestVersion, and LatestVersion are available for all tools
-  // Available functions: eq (equal), ne (not equal), fgColor, bgColor, reset
-  "template": "{{.ToolIcon}} {{if .IsInstalled}}{{if eq .ResolvedVersion .NewestVersion}}{{fgColor \"#1c5f2a\"}}{{else}}{{if .IsOutdated}}{{fgColor \"#8b6914\"}}{{else}}{{fgColor \"#1c5f2a\"}}{{end}}{{end}} {{.ResolvedVersion}} {{reset}}{{end}}{{else}}{{fgColor \"red\"}} Missing {{reset}}{{end}}",
-
-  // Tool-specific icon and color configuration
-  // Use hex colors (e.g., "#61AFEF") or color names (e.g., "blue", "red", "green")
-  // Icons use Nerd Font hex codes (e.g., "e76f", "e627")
-  "tools": {
-    "node": {
-      "icon": "ed0d",
-      "color": "green"
-    },
-    "go": {
-      "icon": "e627",
-      "color": "cyan"
-    }
-  },
-
-  // Cache configuration
-  // TTL: Time-to-live for cached data in seconds (default: 300 = 5 minutes)
-  // Set to 0 to disable caching, or increase for longer intervals
-  "cache": {
-    "ttl": 300
-  }
-}
-```
+> **Note:** The config file contains detailed documentation for all configuration options. Open the generated config file to see complete instructions for templates, icons, colors, and cache settings.
 
 ### Customizing Icons
 
-Find Nerd Font icons and add their hex codes:
+Find Nerd Font icons and add their hex codes. Colors support hex codes, named colors, or ANSI codes:
 
 ```json
 {
   "tools": {
     "rust": {
       "icon": "e7a8",
-      "color": "red"
+      "color": "red"          // named color
     },
     "python": {
       "icon": "e73c",
-      "color": "yellow"
+      "color": "yellow"       // named color
+    },
+    "node": {
+      "icon": "ed0d",
+      "color": "#61AFEF"      // hex color
+    },
+    "go": {
+      "icon": "e627",
+      "color": "208"          // ANSI code (orange)
     }
   }
 }
@@ -146,7 +116,7 @@ The `template` field uses Go's template syntax:
 
  **Available variables:**
  - `.Tool` - Tool name (e.g., "node", "go")
- - `.ToolIcon` - Formatted icon with ANSI color codes
+ - `.ToolIcon` - Formatted icon with ANSI color codes (falls back to tool name if not configured)
  - `.IsInstalled` - Boolean, true if tool is installed
  - `.ResolvedVersion` - Current installed version string (e.g., "24.13.1")
  - `.ConfigVersion` - Configured version constraint (e.g., "~22", "^1.20") - available for all tools
@@ -158,8 +128,8 @@ The `template` field uses Go's template syntax:
 **Available functions:**
 - `eq(a, b)` - Returns true if a == b
 - `ne(a, b)` - Returns true if a != b
-- `fgColor("color")` - Apply foreground color (hex or name)
-- `bgColor("color")` - Apply background color (hex or name)
+- `fgColor("color")` - Apply foreground color (hex code, name, or ANSI code)
+- `bgColor("color")` - Apply background color (hex code, name, or ANSI code)
 - `reset()` - Reset all formatting
 
 ### Color Options
@@ -167,6 +137,8 @@ The `template` field uses Go's template syntax:
 **Named colors:** `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `default`
 
 **Hex colors:** Any 6-digit hex code (e.g., `#FF0000`, `#61AFEF`)
+
+**ANSI codes:** Any valid ANSI color code (e.g., `33` for yellow, `208` for orange)
 
 ## Cache
 

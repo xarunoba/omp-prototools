@@ -662,18 +662,27 @@ func getDefaultConfigContent() string {
 	// "upwards-global" or "all" - Load .prototools while traversing upwards, and do load ~/.proto/.prototools
 	"config_mode": ` + fmt.Sprintf("%q", defaultConfigMode) + `,
 
- 	// Custom Go template for formatting output
-  	// Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsLatest, .IsOutdated
-  	// ConfigVersion, NewestVersion, and LatestVersion are available for all tools
-  	// - .ConfigVersion - Configured version constraint (e.g., "~22", "^1.20") from proto status
-  	// - .NewestVersion - Newest version matching the constraint (e.g., "22.10.1") from proto outdated
-  	// - .LatestVersion - Absolute latest version (e.g., "25.3.1") from proto outdated
-  	// Available functions: eq (equal), ne (not equal), fgColor, bgColor, reset
-  	// Example: Show current version and available updates in bold
+ 	// Template for formatting tool output (Go template syntax)
+ 	// Variables:
+ 	//   .Tool - Tool name
+ 	//   .ToolIcon - Icon with color formatting (falls back to tool name)
+ 	//   .IsInstalled - Boolean: tool is installed
+ 	//   .IsLatest - Boolean: current version is newest matching constraint
+ 	//   .IsOutdated - Boolean: newer version available
+ 	//   .ResolvedVersion - Installed version
+ 	//   .ConfigVersion - Version constraint (e.g., "~22", "^1.20")
+ 	//   .NewestVersion - Newest version matching constraint
+ 	//   .LatestVersion - Absolute latest version
+ 	// Functions:
+ 	//   eq(a, b) - Equal
+ 	//   ne(a, b) - Not equal
+ 	//   fgColor(color) - Set foreground color (hex code, name, or ANSI code)
+ 	//   bgColor(color) - Set background color (hex code, name, or ANSI code)
+ 	//   reset() - Reset all formatting
   	"template": ` + fmt.Sprintf("%q", defaultTemplate) + `,
 
 	// Tool-specific icon and color configuration
-	// Use hex colors (e.g., "#61AFEF") or color names (e.g., "blue", "red", "green")
+	// Colors support hex codes, names, or ANSI codes (e.g., "#61AFEF", "blue", "33")
 	// Icons use Nerd Font hex codes (e.g., "e76f", "e627")
 	"tools": {
 		"bun": {
