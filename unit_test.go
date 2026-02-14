@@ -19,12 +19,12 @@ func TestGetCacheFile(t *testing.T) {
 		{
 			name:          "default config location",
 			configPath:    "",
-			wantCacheFile: "config.cache.json",
+			wantCacheFile: "config.cache.jsonc",
 		},
 		{
 			name:          "custom config with jsonc extension",
 			configPath:    "/custom/path/my-config.jsonc",
-			wantCacheFile: "my-config.cache.json",
+			wantCacheFile: "my-config.cache.jsonc",
 		},
 		{
 			name:          "custom config with json extension",
@@ -34,7 +34,7 @@ func TestGetCacheFile(t *testing.T) {
 		{
 			name:          "custom config with no extension",
 			configPath:    "/custom/path/config",
-			wantCacheFile: "config.cache.json",
+			wantCacheFile: "config.cache",
 		},
 	}
 

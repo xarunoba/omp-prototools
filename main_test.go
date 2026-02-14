@@ -249,7 +249,7 @@ func TestFormatOutputIntegration(t *testing.T) {
 		{
 			name: "valid status cache",
 			setupCache: func() string {
-				cacheFile := filepath.Join(t.TempDir(), "cache.json")
+				cacheFile := filepath.Join(t.TempDir(), "cache.jsonc")
 				data := CachedData{
 					Entries: map[string]DirectoryCacheData{
 						"test-hash": {
@@ -275,7 +275,7 @@ func TestFormatOutputIntegration(t *testing.T) {
 		{
 			name: "cache miss - fetch from proto",
 			setupCache: func() string {
-				return filepath.Join(t.TempDir(), "cache.json")
+				return filepath.Join(t.TempDir(), "cache.jsonc")
 			},
 			config: ProtoConfig{
 				Cache:      CacheConfig{TTL: 300},
@@ -290,7 +290,7 @@ func TestFormatOutputIntegration(t *testing.T) {
 		{
 			name: "force refresh - bypass cache",
 			setupCache: func() string {
-				cacheFile := filepath.Join(t.TempDir(), "cache.json")
+				cacheFile := filepath.Join(t.TempDir(), "cache.jsonc")
 				data := CachedData{
 					Entries: map[string]DirectoryCacheData{
 						"test-hash": {

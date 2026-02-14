@@ -32,7 +32,7 @@ const (
 )
 
 const (
-	defaultTemplate   = `{{.ToolIcon}} {{if .IsInstalled}}{{if eq .ResolvedVersion .NewestVersion}}{{fgColor "#1c5f2a"}}{{else}}{{if .IsOutdated}}{{fgColor "#8b6914"}}{{else}}{{fgColor "#1c5f2a"}}{{end}}{{end}} {{.ResolvedVersion}} {{reset}}{{end}}{{else}}{{fgColor "red"}} Missing {{reset}}{{end}}`
+	defaultTemplate   = `{{.ToolIcon}} {{if .IsInstalled}}{{if eq .ResolvedVersion .LatestVersion}}{{fgColor "green"}}{{.ResolvedVersion}}{{reset}}{{else}}{{if eq .ResolvedVersion .NewestVersion}}{{fgColor "cyan"}}{{.ResolvedVersion}}{{reset}}{{else}}{{fgColor "#4a5568"}}{{.ResolvedVersion}}{{reset}} {{fgColor "white"}}→{{reset}} {{fgColor "cyan"}}{{.NewestVersion}}{{reset}}{{end}}{{end}}{{else}}{{fgColor "red"}}Missing{{reset}}{{end}}  `
 	defaultCacheTTL   = 300
 	defaultConfigMode = "upwards"
 	ResetColor        = "\x1b[0m"
@@ -183,9 +183,6 @@ var getConfigFilePath = func() string {
 	}
 	configDir := filepath.Join(cacheDir, "oh-my-posh", "integrations", "omp-prototools")
 	configFile := filepath.Join(configDir, "config.jsonc")
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		configFile = filepath.Join(configDir, "config.json")
-	}
 	return configFile
 }
 
@@ -197,7 +194,8 @@ var getCacheFile = func() string {
 	configDir := filepath.Dir(configFile)
 	configBase := filepath.Base(configFile)
 	configName := strings.TrimSuffix(configBase, filepath.Ext(configBase))
-	return filepath.Join(configDir, configName+".cache.json")
+	ext := filepath.Ext(configBase)
+	return filepath.Join(configDir, configName+".cache"+ext)
 }
 
 func readCache() (CachedData, error) {
@@ -388,11 +386,7 @@ var loadConfig = func() (ProtoConfig, error) {
 
 		configDir := filepath.Join(cacheDir, "oh-my-posh", "integrations", "omp-prototools")
 
-		// Try .jsonc first, then fall back to .json
 		configFile = filepath.Join(configDir, "config.jsonc")
-		if _, err := os.Stat(configFile); os.IsNotExist(err) {
-			configFile = filepath.Join(configDir, "config.json")
-		}
 	}
 
 	// Check if we have a cached config that's still valid
@@ -669,13 +663,14 @@ func getDefaultConfigContent() string {
 	"config_mode": ` + fmt.Sprintf("%q", defaultConfigMode) + `,
 
  	// Custom Go template for formatting output
- 	// Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsLatest, .IsOutdated
- 	// ConfigVersion, NewestVersion, and LatestVersion are available for all tools
- 	// - .ConfigVersion - Configured version constraint (e.g., "~22", "^1.20") from proto status
- 	// - .NewestVersion - Newest version matching the constraint (e.g., "22.10.1") from proto outdated
- 	// - .LatestVersion - Absolute latest version (e.g., "25.3.1") from proto outdated
- 	// Available functions: eq (equal), ne (not equal), fgColor, bgColor, reset
-	"template": ` + fmt.Sprintf("%q", defaultTemplate) + `,
+  	// Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsLatest, .IsOutdated
+  	// ConfigVersion, NewestVersion, and LatestVersion are available for all tools
+  	// - .ConfigVersion - Configured version constraint (e.g., "~22", "^1.20") from proto status
+  	// - .NewestVersion - Newest version matching the constraint (e.g., "22.10.1") from proto outdated
+  	// - .LatestVersion - Absolute latest version (e.g., "25.3.1") from proto outdated
+  	// Available functions: eq (equal), ne (not equal), fgColor, bgColor, reset
+  	// Example: Show current version and available updates in bold
+  	"template": ` + fmt.Sprintf("%q", defaultTemplate) + `,
 
 	// Tool-specific icon and color configuration
 	// Use hex colors (e.g., "#61AFEF") or color names (e.g., "blue", "red", "green")
