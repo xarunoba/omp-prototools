@@ -32,7 +32,7 @@ const (
 )
 
 const (
-	defaultTemplate   = `{{.ToolIcon}} {{if .IsInstalled}}{{if ne .ResolvedVersion ""}}{{if .IsOutdated}}{{fgColor "#8b6914"}}{{else}}{{fgColor "#1c5f2a"}}{{end}} {{.ResolvedVersion}} {{reset}}{{end}}{{else}}{{fgColor "red"}} Missing {{reset}}{{end}}`
+	defaultTemplate   = `{{.ToolIcon}} {{if .IsInstalled}}{{if eq .ResolvedVersion .NewestVersion}}{{fgColor "#1c5f2a"}}{{else}}{{if .IsOutdated}}{{fgColor "#8b6914"}}{{else}}{{fgColor "#1c5f2a"}}{{end}}{{end}} {{.ResolvedVersion}} {{reset}}{{end}}{{else}}{{fgColor "red"}} Missing {{reset}}{{end}}`
 	defaultCacheTTL   = 300
 	defaultConfigMode = "upwards"
 	ResetColor        = "\x1b[0m"
@@ -73,12 +73,21 @@ func init() {
 }
 
 type ToolStatus struct {
-	ResolvedVersion string `json:"resolved_version"`
 	IsInstalled     bool   `json:"is_installed"`
+	ConfigSource    string `json:"config_source,omitempty"`
+	ConfigVersion   string `json:"config_version,omitempty"`
+	ResolvedVersion string `json:"resolved_version,omitempty"`
+	ProductDir      string `json:"product_dir,omitempty"`
 }
 
 type OutdatedStatus struct {
-	IsOutdated bool `json:"is_outdated"`
+	IsLatest       bool   `json:"is_latest"`
+	IsOutdated     bool   `json:"is_outdated"`
+	ConfigSource   string `json:"config_source,omitempty"`
+	ConfigVersion  string `json:"config_version,omitempty"`
+	CurrentVersion string `json:"current_version,omitempty"`
+	NewestVersion  string `json:"newest_version,omitempty"`
+	LatestVersion  string `json:"latest_version,omitempty"`
 }
 
 type IconConfig struct {
@@ -117,7 +126,11 @@ type TemplateData struct {
 	ToolIcon        string
 	IsInstalled     bool
 	ResolvedVersion string
+	IsLatest        bool
 	IsOutdated      bool
+	ConfigVersion   string
+	NewestVersion   string
+	LatestVersion   string
 }
 
 var getDirectoryContext = func(configMode string) (string, error) {
@@ -494,6 +507,7 @@ var formatOutput = func(tools map[string]ToolStatus, outdatedTools map[string]Ou
 	}
 
 	funcMap := template.FuncMap{
+		"eq":      func(a, b any) bool { return a == b },
 		"ne":      func(a, b any) bool { return a != b },
 		"fgColor": templateFgColor,
 		"bgColor": templateBgColor,
@@ -529,12 +543,43 @@ var formatOutput = func(tools map[string]ToolStatus, outdatedTools map[string]Ou
 			outdated = &out
 		}
 
+		var configVersion string
+		var newestVersion string
+		var latestVersion string
+
+		configVersion = status.ConfigVersion
+		newestVersion = status.ResolvedVersion
+		latestVersion = status.ResolvedVersion
+
+		if outdated != nil {
+			if outdated.NewestVersion != "" {
+				newestVersion = outdated.NewestVersion
+			}
+			if outdated.LatestVersion != "" {
+				latestVersion = outdated.LatestVersion
+			}
+		}
+
 		data := TemplateData{
 			Tool:            tool,
 			ToolIcon:        display,
 			IsInstalled:     status.IsInstalled,
 			ResolvedVersion: status.ResolvedVersion,
+			IsLatest:        outdated != nil && outdated.IsLatest,
 			IsOutdated:      outdated != nil && outdated.IsOutdated,
+			ConfigVersion:   configVersion,
+			NewestVersion: func() string {
+				if newestVersion != "" {
+					return newestVersion
+				}
+				return status.ResolvedVersion
+			}(),
+			LatestVersion: func() string {
+				if latestVersion != "" {
+					return latestVersion
+				}
+				return status.ResolvedVersion
+			}(),
 		}
 
 		var buf bytes.Buffer
@@ -623,9 +668,13 @@ func getDefaultConfigContent() string {
 	// "upwards-global" or "all" - Load .prototools while traversing upwards, and do load ~/.proto/.prototools
 	"config_mode": ` + fmt.Sprintf("%q", defaultConfigMode) + `,
 
-	// Custom Go template for formatting output
-	// Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsOutdated
-	// Available functions: ne (not equal), fgColor, bgColor, reset
+ 	// Custom Go template for formatting output
+ 	// Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsLatest, .IsOutdated
+ 	// ConfigVersion, NewestVersion, and LatestVersion are available for all tools
+ 	// - .ConfigVersion - Configured version constraint (e.g., "~22", "^1.20") from proto status
+ 	// - .NewestVersion - Newest version matching the constraint (e.g., "22.10.1") from proto outdated
+ 	// - .LatestVersion - Absolute latest version (e.g., "25.3.1") from proto outdated
+ 	// Available functions: eq (equal), ne (not equal), fgColor, bgColor, reset
 	"template": ` + fmt.Sprintf("%q", defaultTemplate) + `,
 
 	// Tool-specific icon and color configuration

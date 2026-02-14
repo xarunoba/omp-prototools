@@ -87,9 +87,10 @@ The tool automatically creates a default config file on first run at:
   "config_mode": "upwards",
 
   // Custom Go template for formatting output
-  // Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsOutdated
-  // Available functions: ne (not equal), fgColor, bgColor, reset
-  "template": "{{.ToolIcon}} {{if .IsInstalled}}{{if ne .ResolvedVersion \"\"}}{{if .IsOutdated}}{{fgColor \"#8b6914\"}}{{else}}{{fgColor \"#1c5f2a\"}}{{end}} {{.ResolvedVersion}} {{reset}}{{end}}{{else}}{{fgColor \"red\"}} Missing {{reset}}{{end}}",
+  // Available variables: .Tool, .ToolIcon, .IsInstalled, .ResolvedVersion, .IsLatest, .IsOutdated
+  // ConfigVersion, NewestVersion, and LatestVersion are available for all tools
+  // Available functions: eq (equal), ne (not equal), fgColor, bgColor, reset
+  "template": "{{.ToolIcon}} {{if .IsInstalled}}{{if eq .ResolvedVersion .NewestVersion}}{{fgColor \"#1c5f2a\"}}{{else}}{{if .IsOutdated}}{{fgColor \"#8b6914\"}}{{else}}{{fgColor \"#1c5f2a\"}}{{end}}{{end}} {{.ResolvedVersion}} {{reset}}{{end}}{{else}}{{fgColor \"red\"}} Missing {{reset}}{{end}}",
 
   // Tool-specific icon and color configuration
   // Use hex colors (e.g., "#61AFEF") or color names (e.g., "blue", "red", "green")
@@ -139,18 +140,23 @@ The `template` field uses Go's template syntax:
 
 ```json
 {
-  "template": "{{if .IsInstalled}}✓ {{.ResolvedVersion}}{{else}}✗ Missing{{end}}"
+  "template": "{{if .IsInstalled}}✓ {{if eq .ResolvedVersion .NewestVersion}}{{fgColor \"#1c5f2a\"}}{{else}}{{if .IsOutdated}}{{fgColor \"#8b6914\"}}{{else}}{{fgColor \"#1c5f2a\"}}{{end}}{{end}} {{.ResolvedVersion}} {{reset}}{{else}}✗ Missing{{end}}"
 }
 ```
 
-**Available variables:**
-- `.Tool` - Tool name (e.g., "node", "go")
-- `.ToolIcon` - Formatted icon with ANSI color codes
-- `.IsInstalled` - Boolean, true if tool is installed
-- `.ResolvedVersion` - Version string (e.g., "24.13.1")
-- `.IsOutdated` - Boolean, true if a newer version exists
+ **Available variables:**
+ - `.Tool` - Tool name (e.g., "node", "go")
+ - `.ToolIcon` - Formatted icon with ANSI color codes
+ - `.IsInstalled` - Boolean, true if tool is installed
+ - `.ResolvedVersion` - Current installed version string (e.g., "24.13.1")
+ - `.ConfigVersion` - Configured version constraint (e.g., "~22", "^1.20") - available for all tools
+ - `.NewestVersion` - Newest version matching the constraint (e.g., "22.10.1") - available for all tools
+ - `.LatestVersion` - Absolute latest version (e.g., "25.3.1") - available for all tools
+ - `.IsLatest` - Boolean, true if current version is the newest matching the constraint
+ - `.IsOutdated` - Boolean, true if a newer version exists
 
 **Available functions:**
+- `eq(a, b)` - Returns true if a == b
 - `ne(a, b)` - Returns true if a != b
 - `fgColor("color")` - Apply foreground color (hex or name)
 - `bgColor("color")` - Apply background color (hex or name)
